@@ -26,7 +26,7 @@ def executeStoredProc(procName = procedure, procvars = variables,
         else:
             conn = in_conn
         cur = conn.cursor()
-        procQuery = "call {0}{1}".format(procName,procvars)
+        procQuery = "call {proc}{vars}".format(proc=procName,vars=procvars)
         print procQuery
         cur.execute(procQuery)
         if procvars:
@@ -36,4 +36,4 @@ def executeStoredProc(procName = procedure, procvars = variables,
             cur.close()
     except Exception as e:
         print e
-        print "Could not execute {}({})".format(procName,procvars)
+        print "Could not execute {proc}({vars})".format(proc=procName,vars=procvars)
