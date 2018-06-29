@@ -1,22 +1,35 @@
+
 import multiprocessing
 import time
+import mylogging
+import logging
 
 
-def multipy(work_queue):
+
+def multiply(m_queue, a_queue):
     try:
-        for i in range(10):
-            res = i*2
+        print multiprocessing.current_process()
+        while True:
+            if m_queue.qsize() == 0:
+                continue
+            num = m_queue.get()
+
+            if num == "PoisonPill":
+                a_queue.put("PoisonPill")
+                break
+
+            res = num * 2
             print res, "multipy"
-            work_queue.put(res)
-        work_queue.put("PoisonPill")
+            a_queue.put(res)
     except Exception as e:
         print e
 
 def add(work_queue, result_list):
     try:
+        print multiprocessing.current_process()
         while True:
-            while work_queue.qsize() == 0:
-                time.sleep(.01)
+            if work_queue.qsize() == 0:
+               continue
 
             num = work_queue.get()
 
@@ -29,24 +42,38 @@ def add(work_queue, result_list):
     except Exception as e:
         print e
 
+def foo():
+    logging.debug("lark")
 
-if __name__=="__main__":
+if __name__ == "__main__":
+    mylogging.initializeLog()
+
+    logging = logging.getLogger('queue_log')
 
     manager = multiprocessing.Manager()
-    work_pool=multiprocessing.Pool(4)
+    work_pool = multiprocessing.Pool(8)
 
-    work_q = manager.Queue(5)
+    print "Number of cores: {}".format(multiprocessing.cpu_count())
+
+    multi_q = manager.Queue(1000)
+    add_q = manager.Queue(1000)
     res_list = manager.list()
 
     async_res = []
 
-    async_res.append(work_pool.apply_async(multipy, (work_q,)))
+    for i in range(80):
+        multi_q.put(i)
+
+    multi_q.put("PoisonPill")
+
+    async_res.append(work_pool.apply_async(multiply, (multi_q, add_q,)))
     
-    async_res.append(work_pool.apply_async(add, (work_q, res_list,)))
+    async_res.append(work_pool.apply_async(add, (add_q, res_list,)))
 
     work_pool.close()
     work_pool.join()
 
-    print res_list
+    foo()
+    logging.info(res_list)
     for res in async_res:
         res.get()
