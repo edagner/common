@@ -1,0 +1,6 @@
+{
+    "python.pythonPath": "/home/ed/.local/share/virtualenvs/common-wN6cJj3L/bin/python",
+    "python.linting.pylintEnabled": false,
+    "python.linting.pep8Enabled": true,
+    "python.linting.enabled": true
+}
