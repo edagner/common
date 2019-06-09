@@ -1,6 +1,7 @@
-#common mysqldb python utilities
+# common mysqldb python utilities
 import MySQLdb
 import MySQLdb.cursors
+
 
 class MySQLTools:
 
@@ -17,8 +18,8 @@ class MySQLTools:
             cur_class = MySQLdb.cursors.SSCursor
         elif cursor == "dict":
             cur_class = MySQLdb.cursors.DictCursor
-        conn = MySQLdb.connect(host=self.host, 
-                               user=self.user, 
+        conn = MySQLdb.connect(host=self.host,
+                               user=self.user,
                                passwd=self.password,
                                db=self.schema,
                                cursorclass=cur_class)
@@ -31,8 +32,8 @@ class MySQLTools:
         else:
             conn = connection
         cur = conn.cursor()
-        proc_query = "call {proc}{vars}".format(proc=proc_name,vars=proc_vars)
-        print proc_query
+        proc_query = "call {proc}{vars}".format(proc=proc_name, vars=proc_vars)
+        print(proc_query)
         cur.execute(proc_query)
         if proc_vars:
             cur.execute("SELECT {0}".format(proc_vars))
@@ -46,7 +47,7 @@ class MySQLTools:
             conn = self.create_connection(cur_class)
         else:
             conn = connection
-        cur.conn.cursor()
+        cur = conn.cursor()
         cur.execute(query)
         if get_results == 1:
             result = cur.fetchone()[0]
@@ -64,4 +65,3 @@ class MySQLTools:
             conn.close()
 
         return result
-

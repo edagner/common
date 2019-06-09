@@ -4,8 +4,8 @@ import multiprocessing
 def multiprocess(processNum, multiProcFunction, vars, taskList):
     try:
         pool = multiprocessing.Pool(processNum)
-        for task in taskList: 
-            asyncResult = pool.apply_async(multiProcFunction,(vars))
+        for task in taskList:
+            asyncResult = pool.apply_async(multiProcFunction, (vars))
             poolResults.append(asyncResult)
         while poolResults:
             asyncResult = poolResults.pop()
@@ -17,8 +17,7 @@ def multiprocess(processNum, multiProcFunction, vars, taskList):
         pool.join()
         print asyncResult.successful()
         if not asyncResult.successful():
-            raise Exception("Multiprocessing of {} Failed".
-                format(multiProcFunction))
+            raise Exception("Multiprocessing of {} Failed".format(multiProcFunction))
     except Exception as e:
         print e
         raise e
