@@ -26,6 +26,7 @@ class Job:
 
     def complete(self):
         self.done = True
+        log.debug("{} is now done".format(self.value))
 
 
 def generate_work():
@@ -97,7 +98,7 @@ def minus(minus_q, sort_q):
         sort_q.put(job)
 
 
-def sorter(multi_q, add_q, div_q, minus_q, sort_q, finished_list, job_num):
+def sorter(multi_q, add_q, div_q, minus_q, sort_q, finished_list, job_num, current_job_list):
     while True:
         if sort_q.qsize() == 0:
             time.sleep(1)
@@ -116,6 +117,7 @@ def sorter(multi_q, add_q, div_q, minus_q, sort_q, finished_list, job_num):
         else:
             job.complete()
             finished_list.append(job)
+            current_job_list.remove(job)
             if len(finished_list) == job_num:
                 tkill = "Poison"
                 multi_q.put(tkill)
@@ -134,47 +136,45 @@ if __name__ == "__main__":
     minus_queue = Queue(10)
     sorter_queue = Queue(10)
 
-    finished_job_list = list()
-
     logging.debug(work_list)
 
-    # current_jobs = list()
-    # job_limit = 3
+    current_jobs = []
+    log.debug("Starting Work")
+    while len(work_list) != 0:
+        finished_job_list = list()
+        
+        if len(current_jobs) == 0:
+            log.debug("Getting more work")
+            for i in range(2):
+                b = work_list.popitem()
+                job = Job(b)
+                current_jobs.append(job)
 
-    # while len(work_list) != 0:
-    #     current_jobs.append(work_list.pop(0))
-    #     if len(current_jobs) =120= 3:
-    #         for i in range(2):
+        sort_thread = threading.Thread(
+            target=sorter,
+            args=(multi_queue, add_queue, div_queue, minus_queue, sorter_queue, finished_job_list, len(current_jobs), current_jobs)
+            )
+        sort_thread.start()
 
-    sort_thread = threading.Thread(
-        target=sorter,
-        args=(multi_queue, add_queue, div_queue, minus_queue, sorter_queue, finished_job_list, len(work_list))
-        )
-    sort_thread.start()
+        for job in current_jobs:
+            sorter_queue.put(job)
 
-    for name, work in work_list.items():
-        unit = (name, work)
-        logging.debug(unit)
-        job = Job(unit)
-        sorter_queue.put(job)
+        thread_list = list()
+        for i in range(2):
+            multi_thread = threading.Thread(target=multi, args=(multi_queue, sorter_queue,), name="multi_{}".format(i))
+            add_thread = threading.Thread(target=add, args=(add_queue, sorter_queue,), name="add_{}".format(i))
+            div_thread = threading.Thread(target=div, args=(div_queue, sorter_queue,), name="div_{}".format(i))
+            minus_thread = threading.Thread(target=minus, args=(minus_queue, sorter_queue,), name="minus_{}".format(i))
 
-    thread_list = list()
+            thread_list.append(multi_thread)
+            thread_list.append(add_thread)
+            thread_list.append(div_thread)
+            thread_list.append(minus_thread)
 
-    for i in range(2):
-        multi_thread = threading.Thread(target=multi, args=(multi_queue, sorter_queue,))
-        add_thread = threading.Thread(target=add, args=(add_queue, sorter_queue,))
-        div_thread = threading.Thread(target=div, args=(div_queue, sorter_queue,))
-        minus_thread = threading.Thread(target=minus, args=(minus_queue, sorter_queue,))
-
-        thread_list.append(multi_thread)
-        thread_list.append(add_thread)
-        thread_list.append(div_thread)
-        thread_list.append(minus_thread)
-
-        multi_thread.start()
-        add_thread.start()
-        div_thread.start()
-        minus_thread.start()
+            multi_thread.start()
+            add_thread.start()
+            div_thread.start()
+            minus_thread.start()
 
     for t in thread_list:
         t.join()
